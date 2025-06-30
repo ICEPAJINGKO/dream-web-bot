@@ -8,11 +8,14 @@ Built with NestJS and Puppeteer
 
 - ✅ กรอกข้อมูลความฝันแบบสุ่มในช่อง textarea
 - ✅ กดปุ่ม "ตีเลข" และรอให้เว็บคำนวณเสร็จ
+- ✅ **จัดการ popup และ browser alert อัตโนมัติ** - รองรับทั้ง HTML popup และ JavaScript alert
+- ✅ **Retry logic ที่ชาญฉลาด** - กด OK และรอ 5 วินาทีก่อนลองใหม่ (สูงสุด 3 ครั้ง)
 - ✅ กดปุ่ม "กลับไปกรอกความฝันอื่น" เพื่อเริ่มรอบใหม่
 - ✅ สามารถกำหนดจำนวนรอบที่ต้องการได้
 - ✅ **รองรับหลาย users ทำงานพร้อมกัน (Multi-User Support)**
+- ✅ **Random delay เพื่อลด server load** - users เริ่มต้นและทำงานแบบ staggered
 - ✅ มี REST API สำหรับควบคุม bot
-- ✅ มี logging system สำหรับติดตาม
+- ✅ มี comprehensive logging system สำหรับติดตาม
 
 ## 🚀 การติดตั้งและใช้งาน
 
@@ -134,7 +137,7 @@ src/
 - **NestJS** - Progressive Node.js framework
 - **Puppeteer** - Headless Chrome automation
 - **TypeScript** - Type-safe JavaScript
-      <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
       [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description

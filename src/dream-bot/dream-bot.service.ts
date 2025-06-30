@@ -78,9 +78,14 @@ export class DreamBotService {
         );
 
         try {
-            // รัน bot แต่ละ user พร้อมกัน
-            const userPromises = this.userSessions.map((session) =>
-                this.runUserCycles(session, cycles),
+            // รัน bot แต่ละ user พร้อมกัน แต่เริ่มต้นแบบเซ็กเวนซ์เล็กน้อยเพื่อลด load
+            const userPromises = this.userSessions.map(
+                async (session, index) => {
+                    // เพิ่ม delay เล็กน้อยก่อนเริ่มแต่ละ user
+                    const startDelay = index * 1000; // แต่ละ user เริ่มต้นห่างกัน 1 วินาที
+                    await this.sleep(startDelay);
+                    return this.runUserCycles(session, cycles);
+                },
             );
 
             await Promise.all(userPromises);
@@ -112,8 +117,11 @@ export class DreamBotService {
 
             try {
                 await this.runSingleCycle(session);
-                // รอสักครู่ระหว่างรอบ
-                await this.sleep(2000);
+
+                // รอสักครู่ระหว่างรอบ พร้อม random delay เพื่อไม่ให้ users ทำงานพร้อมกันมากเกินไป
+                const baseDelay = 2000;
+                const randomDelay = Math.random() * 3000; // 0-3 วินาที
+                await this.sleep(baseDelay + randomDelay);
             } catch (error) {
                 this.logger.error(
                     `User ${session.userId} cycle ${i} error:`,
@@ -263,20 +271,8 @@ export class DreamBotService {
             // รอสักครู่แล้วกดปุ่ม "ตีเลข"
             await this.sleep(200);
 
-            // หาและกดปุ่ม "ตีเลข"
-            const submitButton = await session.page.$('button');
-            if (submitButton) {
-                const buttonText = await session.page.evaluate(
-                    (el) => el.textContent,
-                    submitButton,
-                );
-                if (buttonText && buttonText.includes('ตีเลข')) {
-                    await submitButton.click();
-                    this.logger.log(
-                        `User ${session.userId}: Clicked "ตีเลข" button`,
-                    );
-                }
-            }
+            // หาและกดปุ่ม "ตีเลข" พร้อมจัดการ popup
+            await this.clickSubmitButtonWithPopupHandling(session);
 
             // รอให้เว็บคำนวณเสร็จ (รอจนกว่าจะเห็นผลลัพธ์)
             await this.waitForCalculationComplete(session);
@@ -453,5 +449,301 @@ export class DreamBotService {
             activeUsers: this.totalUsers > 0 ? activeUsers : undefined,
             totalUsers: this.totalUsers > 0 ? this.totalUsers : undefined,
         };
+    }
+
+    private async clickSubmitButtonWithPopupHandling(
+        session: UserSession,
+    ): Promise<void> {
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (attempts < maxAttempts) {
+            try {
+                // ตั้งค่า alert handler ก่อนกดปุ่ม
+                let alertHandled = false;
+                let dialogAccepted = false;
+                let alertHandler: ((dialog: puppeteer.Dialog) => Promise<void>) | null = null;
+                
+                alertHandler = async (dialog: puppeteer.Dialog) => {
+                    // ป้องกัน race condition โดยตรวจสอบว่า dialog ถูก handle แล้วหรือไม่
+                    if (dialogAccepted) {
+                        this.logger.warn(
+                            `User ${session.userId}: Dialog already handled, skipping...`,
+                        );
+                        return;
+                    }
+
+                    try {
+                        this.logger.log(
+                            `User ${session.userId}: Alert detected - Type: ${dialog.type()}, Message: "${dialog.message()}"`,
+                        );
+                        
+                        // Mark as accepted first to prevent race condition
+                        dialogAccepted = true;
+                        alertHandled = true;
+                        
+                        await dialog.accept(); // กด OK
+                        
+                        this.logger.log(
+                            `User ${session.userId}: Dialog accepted successfully`,
+                        );
+                    } catch (error) {
+                        this.logger.error(
+                            `User ${session.userId}: Error handling dialog:`,
+                            error,
+                        );
+                        // ถ้า dialog ถูก handle แล้ว ให้ mark flag แต่ไม่ throw error
+                        if (error.message?.includes('already handled')) {
+                            alertHandled = true;
+                        }
+                    }
+                };
+
+                // ฟัง dialog events
+                session.page.once('dialog', alertHandler);
+
+                try {
+                    // หาและกดปุ่ม "ตีเลข"
+                    const submitButton = await session.page.$('button');
+                    if (submitButton) {
+                        const buttonText = await session.page.evaluate(
+                            (el) => el.textContent,
+                            submitButton,
+                        );
+                        if (buttonText && buttonText.includes('ตีเลข')) {
+                            await submitButton.click();
+                            this.logger.log(
+                                `User ${session.userId}: Clicked "ตีเลข" button (attempt ${attempts + 1})`,
+                            );
+
+                            // รอสักครู่เพื่อให้ alert ขึ้นมา (ถ้ามี)
+                            await this.sleep(3000);
+
+                            // ตรวจสอบว่ามี alert หรือไม่
+                            if (alertHandled) {
+                                this.logger.log(
+                                    `User ${session.userId}: Alert handled, waiting 5 seconds before retry...`,
+                                );
+                                await this.sleep(5000);
+                                attempts++;
+                                continue;
+                            }
+
+                            // ตรวจสอบ HTML popup ด้วย (กรณีที่ไม่ใช่ alert)
+                            const htmlPopupHandled =
+                                await this.handlePopupIfExists(session);
+
+                            if (htmlPopupHandled) {
+                                this.logger.log(
+                                    `User ${session.userId}: HTML popup handled, waiting 5 seconds before retry...`,
+                                );
+                                await this.sleep(5000);
+                                attempts++;
+                                continue;
+                            }
+
+                            // ไม่มี popup แสดงว่าสำเร็จ
+                            this.logger.log(
+                                `User ${session.userId}: Submit button clicked successfully`,
+                            );
+                            break;
+                        }
+                    } else {
+                        this.logger.warn(
+                            `User ${session.userId}: Submit button not found`,
+                        );
+                        break;
+                    }
+                } finally {
+                    // ลบ event listener อย่างปลอดภัย
+                    if (alertHandler) {
+                        session.page.off('dialog', alertHandler);
+                        alertHandler = null;
+                    }
+                }
+            } catch (error) {
+                this.logger.error(
+                    `User ${session.userId}: Error clicking submit button:`,
+                    error,
+                );
+                attempts++;
+                if (attempts < maxAttempts) {
+                    await this.sleep(2000);
+                }
+            }
+        }
+
+        if (attempts >= maxAttempts) {
+            this.logger.warn(
+                `User ${session.userId}: Max attempts reached for submit button`,
+            );
+        }
+    }
+
+    private async handlePopupIfExists(session: UserSession): Promise<boolean> {
+        try {
+            // รอสักครู่เพื่อให้ HTML popup ขึ้นมาหากมี
+            await this.sleep(1000);
+
+            this.logger.log(
+                `User ${session.userId}: Checking for HTML popups...`,
+            );
+
+            // ตรวจสอบว่ามี popup หรือไม่ หลายวิธี
+            const popupInfo = await session.page.evaluate(() => {
+                // วิธีที่ 1: ตรวจหา dialog/alert elements
+                const dialogs = Array.from(
+                    document.querySelectorAll(
+                        'div, [role="dialog"], [role="alert"]',
+                    ),
+                ).filter((el) => {
+                    const text = (el.textContent || '').toLowerCase();
+                    const style = window.getComputedStyle(el);
+                    return (
+                        (text.includes('too many') ||
+                            text.includes('requests') ||
+                            text.includes('many') ||
+                            text.includes('limit') ||
+                            text.includes('error')) &&
+                        style.display !== 'none' &&
+                        style.visibility !== 'hidden'
+                    );
+                });
+
+                // วิธีที่ 2: ตรวจหา OK/ตกลง button ที่มองเห็นได้
+                const okButtons = Array.from(
+                    document.querySelectorAll(
+                        'button, input[type="button"], [role="button"]',
+                    ),
+                ).filter((btn) => {
+                    const text = (
+                        btn.textContent ||
+                        btn.getAttribute('value') ||
+                        ''
+                    ).toLowerCase();
+                    const style = window.getComputedStyle(btn);
+                    return (
+                        (text.includes('ok') ||
+                            text.includes('ตกลง') ||
+                            text.includes('close') ||
+                            text.includes('ปิด')) &&
+                        style.display !== 'none' &&
+                        style.visibility !== 'hidden'
+                    );
+                });
+
+                // วิธีที่ 3: ตรวจหาจาก class names หรือ id ที่บ่งบอกถึง popup
+                const popupElements = Array.from(
+                    document.querySelectorAll(
+                        '[class*="popup"], [class*="dialog"], [class*="modal"], [id*="popup"], [id*="dialog"], [id*="modal"]',
+                    ),
+                ).filter((el) => {
+                    const style = window.getComputedStyle(el);
+                    return (
+                        style.display !== 'none' &&
+                        style.visibility !== 'hidden'
+                    );
+                });
+
+                return {
+                    hasDialogs: dialogs.length > 0,
+                    hasOkButtons: okButtons.length > 0,
+                    hasPopupElements: popupElements.length > 0,
+                    dialogTexts: dialogs.map((d) =>
+                        d.textContent?.substring(0, 100),
+                    ),
+                    okButtonTexts: okButtons.map(
+                        (b) => b.textContent || b.getAttribute('value'),
+                    ),
+                };
+            });
+
+            this.logger.log(
+                `User ${session.userId}: HTML Popup check - Dialogs: ${popupInfo.hasDialogs}, OK buttons: ${popupInfo.hasOkButtons}, Popup elements: ${popupInfo.hasPopupElements}`,
+            );
+
+            if (
+                popupInfo.hasDialogs ||
+                popupInfo.hasOkButtons ||
+                popupInfo.hasPopupElements
+            ) {
+                this.logger.log(
+                    `User ${session.userId}: HTML popup detected - Dialog texts: ${JSON.stringify(popupInfo.dialogTexts)}, OK buttons: ${JSON.stringify(popupInfo.okButtonTexts)}`,
+                );
+
+                // ลองกด OK button หลายวิธี
+                const okClicked = await session.page.evaluate(() => {
+                    // วิธีที่ 1: หา OK button โดยตรง
+                    const okButtons = Array.from(
+                        document.querySelectorAll(
+                            'button, input[type="button"], [role="button"]',
+                        ),
+                    ).filter((btn) => {
+                        const text = (
+                            btn.textContent ||
+                            btn.getAttribute('value') ||
+                            ''
+                        ).toLowerCase();
+                        const style = window.getComputedStyle(btn);
+                        return (
+                            (text.includes('ok') ||
+                                text.includes('ตกลง') ||
+                                text.includes('close') ||
+                                text.includes('ปิด')) &&
+                            style.display !== 'none' &&
+                            style.visibility !== 'hidden'
+                        );
+                    });
+
+                    if (okButtons.length > 0) {
+                        (okButtons[0] as HTMLElement).click();
+                        return true;
+                    }
+
+                    // วิธีที่ 2: หาปุ่มใดๆ ใน popup/dialog
+                    const popupButtons = Array.from(
+                        document.querySelectorAll(
+                            '[class*="popup"] button, [class*="dialog"] button, [class*="modal"] button, [role="dialog"] button',
+                        ),
+                    );
+                    if (popupButtons.length > 0) {
+                        (popupButtons[0] as HTMLElement).click();
+                        return true;
+                    }
+
+                    return false;
+                });
+
+                if (okClicked) {
+                    this.logger.log(
+                        `User ${session.userId}: HTML popup OK button clicked successfully`,
+                    );
+                    await this.sleep(1000); // รอให้ popup ปิด
+                    return true;
+                } else {
+                    // ลองใช้ keyboard เพื่อกด Enter หรือ Escape
+                    this.logger.log(
+                        `User ${session.userId}: Trying keyboard shortcuts to dismiss HTML popup`,
+                    );
+                    await session.page.keyboard.press('Enter');
+                    await this.sleep(500);
+                    await session.page.keyboard.press('Escape');
+                    await this.sleep(500);
+                    return true;
+                }
+            } else {
+                this.logger.log(
+                    `User ${session.userId}: No HTML popup detected`,
+                );
+            }
+
+            return false; // ไม่มี popup
+        } catch (error) {
+            this.logger.error(
+                `User ${session.userId}: Error handling HTML popup:`,
+                error,
+            );
+            return false;
+        }
     }
 }
