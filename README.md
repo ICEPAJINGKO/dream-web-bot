@@ -10,6 +10,7 @@ Built with NestJS and Puppeteer
 - ✅ กดปุ่ม "ตีเลข" และรอให้เว็บคำนวณเสร็จ
 - ✅ กดปุ่ม "กลับไปกรอกความฝันอื่น" เพื่อเริ่มรอบใหม่
 - ✅ สามารถกำหนดจำนวนรอบที่ต้องการได้
+- ✅ **รองรับหลาย users ทำงานพร้อมกัน (Multi-User Support)**
 - ✅ มี REST API สำหรับควบคุม bot
 - ✅ มี logging system สำหรับติดตาม
 
@@ -47,26 +48,70 @@ Server จะรันที่ `http://localhost:3000`
 
 ## 📡 API Endpoints
 
-| Method | Endpoint              | Description                       |
-| ------ | --------------------- | --------------------------------- |
-| `POST` | `/dream-bot/start`    | เริ่มต้น bot ด้วยจำนวนรอบที่กำหนด |
-| `POST` | `/dream-bot/stop`     | หยุดการทำงานของ bot               |
-| `GET`  | `/dream-bot/status`   | ตรวจสอบสถานะการทำงาน              |
-| `POST` | `/dream-bot/run-once` | รัน bot แค่ 1 รอบ                 |
+| Method | Endpoint              | Description                                |
+| ------ | --------------------- | ------------------------------------------ |
+| `POST` | `/dream-bot/start`    | เริ่มต้น bot ด้วยจำนวนรอบและผู้ใช้ที่กำหนด |
+| `POST` | `/dream-bot/stop`     | หยุดการทำงานของ bot                        |
+| `GET`  | `/dream-bot/status`   | ตรวจสอบสถานะการทำงาน                       |
+| `POST` | `/dream-bot/run-once` | รัน bot แค่ 1 รอบ ด้วย 1 user              |
 
 ### ตัวอย่างการใช้งาน
 
 ```bash
-# เริ่ม bot ด้วย 5 รอบ
+# เริ่ม bot ด้วย 5 รอบ และ 1 user (default)
 curl -X POST http://localhost:3000/dream-bot/start \
   -H "Content-Type: application/json" \
   -d '{"cycles": 5}'
 
-# ตรวจสอบสถานะ
+# เริ่ม bot ด้วย 3 รอบ และ 2 users พร้อมกัน
+curl -X POST http://localhost:3000/dream-bot/start \
+  -H "Content-Type: application/json" \
+  -d '{"cycles": 3, "users": 2}'
+
+# ตรวจสอบสถานะ (จะแสดงข้อมูล multi-user)
 curl http://localhost:3000/dream-bot/status
 
-# หยุด bot
+# หยุด bot (จะปิดทุก browser)
 curl -X POST http://localhost:3000/dream-bot/stop
+
+# รัน bot แค่ครั้งเดียว
+curl -X POST http://localhost:3000/dream-bot/run-once
+```
+
+## 🔧 Request Body Parameters
+
+### POST `/dream-bot/start`
+
+```json
+{
+    "cycles": 10, // จำนวนรอบที่ต้องการรัน (default: 10)
+    "users": 1 // จำนวน users ที่จะรันพร้อมกัน (default: 1)
+}
+```
+
+### Response Format
+
+```json
+{
+    "success": true,
+    "message": "Dream Bot started for 3 cycles with 2 users",
+    "data": {
+        "cycles": 3,
+        "users": 2
+    }
+}
+```
+
+## 📊 Status Response
+
+```json
+{
+    "isRunning": true,
+    "currentCycle": 2,
+    "totalCycles": 3,
+    "activeUsers": 2,
+    "totalUsers": 2
+}
 ```
 
 ## 🏗️ โครงสร้างโปรเจ็กต์
@@ -89,8 +134,8 @@ src/
 - **NestJS** - Progressive Node.js framework
 - **Puppeteer** - Headless Chrome automation
 - **TypeScript** - Type-safe JavaScript
-    <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-    [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+      <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+      [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 
