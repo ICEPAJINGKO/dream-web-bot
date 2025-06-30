@@ -1,14 +1,14 @@
-import { Controller, Post, Get, Body, Logger } from '@nestjs/common';
-import { 
-    ApiTags, 
-    ApiOperation, 
-    ApiBody,
-    ApiOkResponse,
+import { Body, Controller, Get, Logger, Post } from '@nestjs/common';
+import {
     ApiBadRequestResponse,
-    ApiInternalServerErrorResponse
+    ApiBody,
+    ApiInternalServerErrorResponse,
+    ApiOkResponse,
+    ApiOperation,
+    ApiTags,
 } from '@nestjs/swagger';
 import { DreamBotService } from './dream-bot.service';
-import { StartBotDto, BotResponseDto, BotStatusDto } from './dto';
+import { BotResponseDto, BotStatusDto, StartBotDto } from './dto';
 
 @ApiTags('dream-bot')
 @Controller('dream-bot')
@@ -20,29 +20,30 @@ export class DreamBotController {
     @Post('start')
     @ApiOperation({
         summary: 'เริ่มการทำงานของบอท (Start Bot)',
-        description: 'เริ่มต้นการทำงานของ Dream Web Bot ด้วยจำนวนรอบและผู้ใช้ที่กำหนด\n\nStart Dream Web Bot with specified cycles and users',
+        description:
+            'เริ่มต้นการทำงานของ Dream Web Bot ด้วยจำนวนรอบและผู้ใช้ที่กำหนด\n\nStart Dream Web Bot with specified cycles and users',
     })
     @ApiBody({
         type: StartBotDto,
         description: 'การตั้งค่าการทำงานของบอท (Bot configuration)',
         examples: {
-            'เริ่มต้นพื้นฐาน': {
+            เริ่มต้นพื้นฐาน: {
                 summary: 'เริ่มต้นพื้นฐาน (Basic start)',
                 description: 'เริ่มบอทด้วยการตั้งค่าพื้นฐาน',
                 value: {
                     cycles: 10,
-                    users: 1
-                }
+                    users: 1,
+                },
             },
-            'หลายผู้ใช้': {
+            หลายผู้ใช้: {
                 summary: 'หลายผู้ใช้ (Multiple users)',
                 description: 'เริ่มบอทด้วยผู้ใช้หลายคนพร้อมกัน',
                 value: {
                     cycles: 20,
-                    users: 5
-                }
-            }
-        }
+                    users: 5,
+                },
+            },
+        },
     })
     @ApiOkResponse({
         description: 'บอทเริ่มทำงานเรียบร้อยแล้ว (Bot started successfully)',
@@ -61,7 +62,8 @@ export class DreamBotController {
     @Post('stop')
     @ApiOperation({
         summary: 'หยุดการทำงานของบอท (Stop Bot)',
-        description: 'หยุดการทำงานของ Dream Web Bot และปิด browser ทั้งหมด\n\nStop Dream Web Bot and close all browsers',
+        description:
+            'หยุดการทำงานของ Dream Web Bot และปิด browser ทั้งหมด\n\nStop Dream Web Bot and close all browsers',
     })
     @ApiOkResponse({
         description: 'บอทหยุดทำงานเรียบร้อยแล้ว (Bot stopped successfully)',
@@ -77,7 +79,8 @@ export class DreamBotController {
     @Get('status')
     @ApiOperation({
         summary: 'ตรวจสอบสถานะบอท (Check Bot Status)',
-        description: 'ตรวจสอบสถานะปัจจุบันของ Dream Web Bot รวมถึงจำนวนรอบและผู้ใช้\n\nCheck current status of Dream Web Bot including cycles and users',
+        description:
+            'ตรวจสอบสถานะปัจจุบันของ Dream Web Bot รวมถึงจำนวนรอบและผู้ใช้\n\nCheck current status of Dream Web Bot including cycles and users',
     })
     @ApiOkResponse({
         description: 'ข้อมูลสถานะของบอท (Bot status information)',
@@ -90,10 +93,12 @@ export class DreamBotController {
     @Post('run-once')
     @ApiOperation({
         summary: 'รันบอทครั้งเดียว (Run Bot Once)',
-        description: 'รัน Dream Web Bot เพียงครั้งเดียวด้วยผู้ใช้หนึ่งคนและหนึ่งรอบ (สำหรับทดสอบ)\n\nRun Dream Web Bot once with single user and single cycle (for testing)',
+        description:
+            'รัน Dream Web Bot เพียงครั้งเดียวด้วยผู้ใช้หนึ่งคนและหนึ่งรอบ (สำหรับทดสอบ)\n\nRun Dream Web Bot once with single user and single cycle (for testing)',
     })
     @ApiOkResponse({
-        description: 'บอททำงานเสร็จสิ้นเรียบร้อยแล้ว (Bot completed successfully)',
+        description:
+            'บอททำงานเสร็จสิ้นเรียบร้อยแล้ว (Bot completed successfully)',
         type: BotResponseDto,
     })
     @ApiInternalServerErrorResponse({

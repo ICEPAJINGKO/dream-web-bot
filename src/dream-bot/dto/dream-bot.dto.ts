@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-    IsOptional,
-    IsInt,
-    Min,
-    Max,
-    IsBoolean,
-    IsString,
-} from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+    IsBoolean,
+    IsInt,
+    IsOptional,
+    IsString,
+    Max,
+    Min,
+} from 'class-validator';
 
 export class StartBotDto {
     @ApiPropertyOptional({
