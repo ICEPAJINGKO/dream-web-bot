@@ -96,6 +96,7 @@ export class DreamBotService {
             this.isRunning = false;
             this.resetUserSessions();
             this.logger.log('Bot stopped');
+            await this.stopBot(); // Ensure all browsers are closed
         }
     }
 
@@ -461,29 +462,27 @@ export class DreamBotService {
             try {
                 // ตั้งค่า alert handler ก่อนกดปุ่ม
                 let alertHandled = false;
-                let dialogAccepted = false;
-                let alertHandler: ((dialog: puppeteer.Dialog) => Promise<void>) | null = null;
-                
-                alertHandler = async (dialog: puppeteer.Dialog) => {
-                    // ป้องกัน race condition โดยตรวจสอบว่า dialog ถูก handle แล้วหรือไม่
-                    if (dialogAccepted) {
+                let dialogProcessing = false;
+
+                const alertHandler = async (dialog: puppeteer.Dialog) => {
+                    // ป้องกัน race condition โดยใช้ flag
+                    if (dialogProcessing) {
                         this.logger.warn(
-                            `User ${session.userId}: Dialog already handled, skipping...`,
+                            `User ${session.userId}: Dialog is already being processed, skipping...`,
                         );
                         return;
                     }
+
+                    dialogProcessing = true; // Lock processing
 
                     try {
                         this.logger.log(
                             `User ${session.userId}: Alert detected - Type: ${dialog.type()}, Message: "${dialog.message()}"`,
                         );
-                        
-                        // Mark as accepted first to prevent race condition
-                        dialogAccepted = true;
+
                         alertHandled = true;
-                        
                         await dialog.accept(); // กด OK
-                        
+
                         this.logger.log(
                             `User ${session.userId}: Dialog accepted successfully`,
                         );
@@ -492,15 +491,20 @@ export class DreamBotService {
                             `User ${session.userId}: Error handling dialog:`,
                             error,
                         );
-                        // ถ้า dialog ถูก handle แล้ว ให้ mark flag แต่ไม่ throw error
+                        // ถ้า dialog ถูก handle แล้ว ให้ mark flag
                         if (error.message?.includes('already handled')) {
                             alertHandled = true;
                         }
+                    } finally {
+                        dialogProcessing = false; // Unlock
                     }
                 };
 
-                // ฟัง dialog events
-                session.page.once('dialog', alertHandler);
+                // ลบ event listeners เก่าก่อน (ถ้ามี)
+                session.page.removeAllListeners('dialog');
+
+                // ตั้งค่า dialog handler
+                session.page.on('dialog', alertHandler);
 
                 try {
                     // หาและกดปุ่ม "ตีเลข"
@@ -556,10 +560,7 @@ export class DreamBotService {
                     }
                 } finally {
                     // ลบ event listener อย่างปลอดภัย
-                    if (alertHandler) {
-                        session.page.off('dialog', alertHandler);
-                        alertHandler = null;
-                    }
+                    session.page.removeAllListeners('dialog');
                 }
             } catch (error) {
                 this.logger.error(
