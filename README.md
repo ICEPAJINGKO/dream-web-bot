@@ -21,13 +21,25 @@ Built with NestJS and Puppeteer
 npm install
 ```
 
+### Code Formatting & Linting
+
+```bash
+# ก่อนการพัฒนา - แก้ไข formatting และ linting issues
+npm run code:fix
+
+# ตรวจสอบ code quality
+npm run code:check
+```
+
+📋 **สำหรับ team members**: ดู [FORMATTING_GUIDE.md](./FORMATTING_GUIDE.md) สำหรับรายละเอียดการตั้งค่า
+
 ### เริ่มต้น server
 
 ```bash
 # Development mode
 npm run start:dev
 
-# Production mode  
+# Production mode
 npm run start:prod
 ```
 
@@ -35,12 +47,12 @@ Server จะรันที่ `http://localhost:3000`
 
 ## 📡 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/dream-bot/start` | เริ่มต้น bot ด้วยจำนวนรอบที่กำหนด |
-| `POST` | `/dream-bot/stop` | หยุดการทำงานของ bot |
-| `GET` | `/dream-bot/status` | ตรวจสอบสถานะการทำงาน |
-| `POST` | `/dream-bot/run-once` | รัน bot แค่ 1 รอบ |
+| Method | Endpoint              | Description                       |
+| ------ | --------------------- | --------------------------------- |
+| `POST` | `/dream-bot/start`    | เริ่มต้น bot ด้วยจำนวนรอบที่กำหนด |
+| `POST` | `/dream-bot/stop`     | หยุดการทำงานของ bot               |
+| `GET`  | `/dream-bot/status`   | ตรวจสอบสถานะการทำงาน              |
+| `POST` | `/dream-bot/run-once` | รัน bot แค่ 1 รอบ                 |
 
 ### ตัวอย่างการใช้งาน
 
@@ -77,8 +89,8 @@ src/
 - **NestJS** - Progressive Node.js framework
 - **Puppeteer** - Headless Chrome automation
 - **TypeScript** - Type-safe JavaScript
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+    <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+    [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 

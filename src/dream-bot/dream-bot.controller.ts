@@ -4,27 +4,27 @@ import { StartBotDto } from './dto';
 
 @Controller('dream-bot')
 export class DreamBotController {
-  private readonly logger = new Logger(DreamBotController.name);
+    private readonly logger = new Logger(DreamBotController.name);
 
-  constructor(private readonly dreamBotService: DreamBotService) {}
+    constructor(private readonly dreamBotService: DreamBotService) {}
 
-  @Post('start')
-  async startBot(@Body() startBotDto: StartBotDto) {
-    return await this.dreamBotService.handleStartBot(startBotDto);
-  }
+    @Post('start')
+    async startBot(@Body() startBotDto: StartBotDto) {
+        return await this.dreamBotService.handleStartBot(startBotDto);
+    }
 
-  @Post('stop')
-  async stopBot() {
-    return await this.dreamBotService.handleStopBot();
-  }
+    @Post('stop')
+    async stopBot() {
+        return await this.dreamBotService.handleStopBot();
+    }
 
-  @Get('status')
-  getStatus() {
-    return this.dreamBotService.getStatus();
-  }
+    @Get('status')
+    getStatus() {
+        return this.dreamBotService.getStatus();
+    }
 
-  @Post('run-once')
-  async runOnce() {
-    return await this.dreamBotService.handleRunOnce();
-  }
+    @Post('run-once')
+    async runOnce() {
+        return await this.dreamBotService.handleRunOnce();
+    }
 }

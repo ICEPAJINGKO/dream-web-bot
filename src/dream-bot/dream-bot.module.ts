@@ -3,8 +3,8 @@ import { DreamBotController } from './dream-bot.controller';
 import { DreamBotService } from './dream-bot.service';
 
 @Module({
-  controllers: [DreamBotController],
-  providers: [DreamBotService],
-  exports: [DreamBotService],
+    controllers: [DreamBotController],
+    providers: [DreamBotService],
+    exports: [DreamBotService],
 })
 export class DreamBotModule {}

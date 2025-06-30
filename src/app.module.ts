@@ -4,8 +4,8 @@ import { AppService } from './app.service';
 import { DreamBotModule } from './dream-bot/dream-bot.module';
 
 @Module({
-  imports: [DreamBotModule],
-  controllers: [AppController],
-  providers: [AppService],
+    imports: [DreamBotModule],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule {}
