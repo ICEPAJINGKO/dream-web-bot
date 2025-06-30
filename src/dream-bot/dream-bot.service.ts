@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
-import { StartBotDto, BotStatusDto, BotResponseDto } from './dto';
+import { BotResponseDto, BotStatusDto, StartBotDto } from './dto';
 
 @Injectable()
 export class DreamBotService {
@@ -171,7 +171,7 @@ export class DreamBotService {
             this.logger.log(`Entered dream text: ${randomDreamText}`);
 
             // รอสักครู่แล้วกดปุ่ม "ตีเลข"
-            await this.sleep(1000);
+            await this.sleep(200);
 
             // หาและกดปุ่ม "ตีเลข"
             const submitButton = await this.page.$('button');
@@ -219,7 +219,7 @@ export class DreamBotService {
             );
 
             this.logger.log('Calculation completed');
-            await this.sleep(2000); // รอให้แน่ใจว่าหน้าโหลดเสร็จสมบูรณ์
+            await this.sleep(200); // รอให้แน่ใจว่าหน้าโหลดเสร็จสมบูรณ์
         } catch (error) {
             this.logger.error('Timeout waiting for calculation:', error);
             // ลองรีเฟรชหน้าถ้าเกิดปัญหา
@@ -262,7 +262,7 @@ export class DreamBotService {
 
                 // รอให้กลับไปหน้าแรก
                 await this.page.waitForSelector('textarea', { timeout: 10000 });
-                await this.sleep(1000);
+                await this.sleep(200);
             } else {
                 this.logger.warn('Back button not found, refreshing page');
                 await this.page.reload({ waitUntil: 'networkidle2' });
