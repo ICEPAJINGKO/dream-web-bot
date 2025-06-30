@@ -464,7 +464,7 @@ export class DreamBotService {
                 let alertHandled = false;
                 let dialogProcessing = false;
 
-                const alertHandler = async (dialog: puppeteer.Dialog) => {
+                const alertHandler = (dialog: puppeteer.Dialog): void => {
                     // ป้องกัน race condition โดยใช้ flag
                     if (dialogProcessing) {
                         this.logger.warn(
@@ -475,29 +475,41 @@ export class DreamBotService {
 
                     dialogProcessing = true; // Lock processing
 
-                    try {
-                        this.logger.log(
-                            `User ${session.userId}: Alert detected - Type: ${dialog.type()}, Message: "${dialog.message()}"`,
-                        );
+                    // Handle async operations without returning Promise
+                    (async (): Promise<void> => {
+                        try {
+                            this.logger.log(
+                                `User ${session.userId}: Alert detected - Type: ${dialog.type()}, Message: "${dialog.message()}"`,
+                            );
 
-                        alertHandled = true;
-                        await dialog.accept(); // กด OK
+                            alertHandled = true;
+                            await dialog.accept(); // กด OK
 
-                        this.logger.log(
-                            `User ${session.userId}: Dialog accepted successfully`,
-                        );
-                    } catch (error) {
+                            this.logger.log(
+                                `User ${session.userId}: Dialog accepted successfully`,
+                            );
+                        } catch (error: unknown) {
+                            this.logger.error(
+                                `User ${session.userId}: Error handling dialog:`,
+                                error,
+                            );
+                            // ถ้า dialog ถูก handle แล้ว ให้ mark flag
+                            if (
+                                error instanceof Error &&
+                                error.message?.includes('already handled')
+                            ) {
+                                alertHandled = true;
+                            }
+                        } finally {
+                            dialogProcessing = false; // Unlock
+                        }
+                    })().catch((error: unknown) => {
                         this.logger.error(
-                            `User ${session.userId}: Error handling dialog:`,
+                            `User ${session.userId}: Unhandled error in dialog handler:`,
                             error,
                         );
-                        // ถ้า dialog ถูก handle แล้ว ให้ mark flag
-                        if (error.message?.includes('already handled')) {
-                            alertHandled = true;
-                        }
-                    } finally {
-                        dialogProcessing = false; // Unlock
-                    }
+                        dialogProcessing = false; // Ensure unlock even on unhandled errors
+                    });
                 };
 
                 // ลบ event listeners เก่าก่อน (ถ้ามี)
