@@ -1,10 +1,17 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsInt, Min, Max, IsBoolean, IsString } from "class-validator";
-import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+    IsOptional,
+    IsInt,
+    Min,
+    Max,
+    IsBoolean,
+    IsString,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class StartBotDto {
     @ApiPropertyOptional({
-        description: "จำนวนรอบการทำงาน (Number of cycles to run)",
+        description: 'จำนวนรอบการทำงาน (Number of cycles to run)',
         example: 10,
         default: 10,
         minimum: 1,
@@ -12,13 +19,17 @@ export class StartBotDto {
     })
     @IsOptional()
     @Type(() => Number)
-    @IsInt({ message: "จำนวนรอบต้องเป็นจำนวนเต็ม (Cycles must be an integer)" })
-    @Min(1, { message: "จำนวนรอบต้องมากกว่า 0 (Cycles must be greater than 0)" })
-    @Max(100, { message: "จำนวนรอบต้องไม่เกิน 100 (Cycles must not exceed 100)" })
+    @IsInt({ message: 'จำนวนรอบต้องเป็นจำนวนเต็ม (Cycles must be an integer)' })
+    @Min(1, {
+        message: 'จำนวนรอบต้องมากกว่า 0 (Cycles must be greater than 0)',
+    })
+    @Max(100, {
+        message: 'จำนวนรอบต้องไม่เกิน 100 (Cycles must not exceed 100)',
+    })
     cycles?: number = 10;
 
     @ApiPropertyOptional({
-        description: "จำนวนผู้ใช้พร้อมกัน (Number of concurrent users)",
+        description: 'จำนวนผู้ใช้พร้อมกัน (Number of concurrent users)',
         example: 1,
         default: 1,
         minimum: 1,
@@ -27,34 +38,34 @@ export class StartBotDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt({
-        message: "จำนวนผู้ใช้ต้องเป็นจำนวนเต็ม (Users must be an integer)",
+        message: 'จำนวนผู้ใช้ต้องเป็นจำนวนเต็ม (Users must be an integer)',
     })
     @Min(1, {
-        message: "จำนวนผู้ใช้ต้องมากกว่า 0 (Users must be greater than 0)",
+        message: 'จำนวนผู้ใช้ต้องมากกว่า 0 (Users must be greater than 0)',
     })
     @Max(20, {
-        message: "จำนวนผู้ใช้ต้องไม่เกิน 20 (Users must not exceed 20)",
+        message: 'จำนวนผู้ใช้ต้องไม่เกิน 20 (Users must not exceed 20)',
     })
     users?: number = 1;
 }
 
 export class UserStatusDto {
     @ApiProperty({
-        description: "รหัสผู้ใช้ (User ID)",
+        description: 'รหัสผู้ใช้ (User ID)',
         example: 1,
     })
     @IsInt()
     userId: number;
 
     @ApiProperty({
-        description: "รอบปัจจุบัน (Current cycle)",
+        description: 'รอบปัจจุบัน (Current cycle)',
         example: 5,
     })
     @IsInt()
     currentCycle: number;
 
     @ApiProperty({
-        description: "สถานะการใช้งาน (Active status)",
+        description: 'สถานะการใช้งาน (Active status)',
         example: true,
     })
     @IsBoolean()
@@ -63,14 +74,14 @@ export class UserStatusDto {
 
 export class BotStatusDto {
     @ApiProperty({
-        description: "สถานะการทำงานของบอท (Bot running status)",
+        description: 'สถานะการทำงานของบอท (Bot running status)',
         example: true,
     })
     @IsBoolean()
     isRunning: boolean;
 
     @ApiPropertyOptional({
-        description: "รอบปัจจุบันที่กำลังทำงาน (Current cycle number)",
+        description: 'รอบปัจจุบันที่กำลังทำงาน (Current cycle number)',
         example: 5,
     })
     @IsOptional()
@@ -78,7 +89,7 @@ export class BotStatusDto {
     currentCycle?: number;
 
     @ApiPropertyOptional({
-        description: "จำนวนรอบทั้งหมด (Total number of cycles)",
+        description: 'จำนวนรอบทั้งหมด (Total number of cycles)',
         example: 10,
     })
     @IsOptional()
@@ -86,7 +97,7 @@ export class BotStatusDto {
     totalCycles?: number;
 
     @ApiPropertyOptional({
-        description: "จำนวนผู้ใช้ที่ยังคงใช้งานอยู่ (Number of active users)",
+        description: 'จำนวนผู้ใช้ที่ยังคงใช้งานอยู่ (Number of active users)',
         example: 3,
     })
     @IsOptional()
@@ -94,7 +105,7 @@ export class BotStatusDto {
     activeUsers?: number;
 
     @ApiPropertyOptional({
-        description: "จำนวนผู้ใช้ทั้งหมด (Total number of users)",
+        description: 'จำนวนผู้ใช้ทั้งหมด (Total number of users)',
         example: 5,
     })
     @IsOptional()
@@ -102,10 +113,10 @@ export class BotStatusDto {
     totalUsers?: number;
 
     @ApiPropertyOptional({
-        description: "สถานะของผู้ใช้แต่ละคน (Individual user status)",
+        description: 'สถานะของผู้ใช้แต่ละคน (Individual user status)',
         example: [
             { userId: 1, currentCycle: 5, isActive: true },
-            { userId: 2, currentCycle: 3, isActive: true }
+            { userId: 2, currentCycle: 3, isActive: true },
         ],
         type: [UserStatusDto],
     })
@@ -115,29 +126,29 @@ export class BotStatusDto {
 
 export class BotResponseDto {
     @ApiProperty({
-        description: "สถานะความสำเร็จของการทำงาน (Operation success status)",
+        description: 'สถานะความสำเร็จของการทำงาน (Operation success status)',
         example: true,
     })
     @IsBoolean()
     success: boolean;
 
     @ApiProperty({
-        description: "ข้อความตอบกลับ (Response message)",
-        example: "บอทเริ่มทำงานเรียบร้อยแล้ว",
+        description: 'ข้อความตอบกลับ (Response message)',
+        example: 'บอทเริ่มทำงานเรียบร้อยแล้ว',
     })
     @IsString()
     message: string;
 
     @ApiPropertyOptional({
-        description: "ข้อมูลเพิ่มเติม (Additional data)",
+        description: 'ข้อมูลเพิ่มเติม (Additional data)',
         example: { cycles: 10, users: 5 },
     })
     @IsOptional()
     data?: Record<string, unknown>;
 
     @ApiPropertyOptional({
-        description: "ข้อความแสดงความผิดพลาด (Error message)",
-        example: "เกิดข้อผิดพลาดในการเริ่มต้นบอท",
+        description: 'ข้อความแสดงความผิดพลาด (Error message)',
+        example: 'เกิดข้อผิดพลาดในการเริ่มต้นบอท',
     })
     @IsOptional()
     @IsString()
