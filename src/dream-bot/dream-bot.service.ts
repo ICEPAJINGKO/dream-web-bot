@@ -26,7 +26,7 @@ export class DreamBotService {
             // สร้าง browser และ page สำหรับแต่ละ user
             for (let i = 0; i < users; i++) {
                 const browser = await puppeteer.launch({
-                    headless: false, // เปิด browser ให้เห็น
+                    headless: false, // true เพื่อไม่แสดงหน้าต่าง - false เพื่อแสดงหน้าต่าง
                     defaultViewport: { width: 400, height: 400 },
                     args: [
                         '--no-sandbox',
@@ -456,7 +456,7 @@ export class DreamBotService {
         session: UserSession,
     ): Promise<void> {
         let attempts = 0;
-        const maxAttempts = 3;
+        const maxAttempts = 10;
 
         while (attempts < maxAttempts) {
             try {
@@ -483,6 +483,7 @@ export class DreamBotService {
                             );
 
                             alertHandled = true;
+                            await this.sleep(1000); // รอสักครู่ก่อนกด OK
                             await dialog.accept(); // กด OK
 
                             this.logger.log(
