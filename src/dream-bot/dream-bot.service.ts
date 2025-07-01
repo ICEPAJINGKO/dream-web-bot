@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
-import { BotResponseDto, BotStatusDto, StartBotDto } from './dto';
+import {
+    BotResponseDto,
+    BotStatusDto,
+    StartBotDto,
+    UserStatusDto,
+} from './dto';
 
 interface UserSession {
     browser: puppeteer.Browser;
@@ -26,7 +31,7 @@ export class DreamBotService {
             // สร้าง browser และ page สำหรับแต่ละ user
             for (let i = 0; i < users; i++) {
                 const browser = await puppeteer.launch({
-                    headless: false, // true เพื่อไม่แสดงหน้าต่าง - false เพื่อแสดงหน้าต่าง
+                    headless: true, // true เพื่อไม่แสดงหน้าต่าง - false เพื่อแสดงหน้าต่าง
                     defaultViewport: { width: 400, height: 400 },
                     args: [
                         '--no-sandbox',
@@ -443,12 +448,22 @@ export class DreamBotService {
                   )
                 : 0;
 
+        // สร้างข้อมูลสถานะของแต่ละ user
+        const userStatuses: UserStatusDto[] = this.userSessions.map(
+            (session) => ({
+                userId: session.userId,
+                currentCycle: session.currentCycle,
+                isActive: session.isActive,
+            }),
+        );
+
         return {
             isRunning: this.isRunning,
             currentCycle: currentCycle > 0 ? currentCycle : undefined,
             totalCycles: this.totalCycles > 0 ? this.totalCycles : undefined,
             activeUsers: this.totalUsers > 0 ? activeUsers : undefined,
             totalUsers: this.totalUsers > 0 ? this.totalUsers : undefined,
+            users: this.userSessions.length > 0 ? userStatuses : undefined,
         };
     }
 
